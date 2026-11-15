@@ -30,74 +30,8 @@ footer{text-align:center;padding:22px;color:#657080}
 </header>
 
 <main>
-<div class="card">
-<h2>🛠️ मदद बुक करें</h2>
-<form id="helpForm">
-<label>आपका नाम</label>
-<input id="name" placeholder="अपना नाम लिखें" required>
-
-<label>मोबाइल नंबर</label>
-<input id="phone" type="tel" placeholder="10 अंकों का मोबाइल नंबर" pattern="[0-9]{10}" required>
-
-<label>गाड़ी का प्रकार</label>
-<select id="vehicle" required>
-<option value="">चुनें</option>
-<option>बाइक</option>
-<option>कार</option>
-<option>ट्रक</option>
-</select>
-
-<label>क्या समस्या है?</label>
-<select id="service" required>
-<option value="">सेवा चुनें</option>
-<option>टायर पंचर</option>
-<option>मैकेनिक</option>
-<option>बैटरी समस्या</option>
-<option>टोइंग सेवा</option>
-<option>इंजन समस्या</option>
-<option>अन्य</option>
-</select>
-
-<label>आपकी लोकेशन</label>
-<input id="location" placeholder="जैसे: सोनबरसा राज, सहरसा" required>
-
-<label>समस्या की जानकारी</label>
-<textarea id="details" placeholder="अपनी समस्या बताएं"></textarea>
-
-<button type="submit">मदद के लिए रिक्वेस्ट भेजें</button>
-</form>
-<div id="result"></div>
-</div>
 
 <div class="card">
-<h2>🔧 मैकेनिक पार्टनर</h2>
-<p>RaahiFix से जुड़कर अपने इलाके में काम पाएँ।</p>
-<p>जल्द ही मैकेनिक रजिस्ट्रेशन शुरू होगा।</p>
-</div>
-</main>
-
-<footer>© 2026 RaahiFix | Saharsa, Bihar</footer>
-
-<script>
-document.getElementById("helpForm").addEventListener("submit",function(e){
-e.preventDefault();
-const request={
-name:document.getElementById("name").value,
-phone:document.getElementById("phone").value,
-vehicle:document.getElementById("vehicle").value,
-service:document.getElementById("service").value,
-location:document.getElementById("location").value,
-details:document.getElementById("details").value
-};
-let requests=JSON.parse(localStorage.getItem("raahifix_requests")||"[]");
-requests.push(request);
-localStorage.setItem("raahifix_requests",JSON.stringify(requests));
-document.getElementById("result").style.display="block";
-document.getElementById("result").innerHTML="आपकी रिक्वेस्ट इस डेमो में सेव हो गई है। धन्यवाद!";
-this.reset();
-});const request={
-  </script>
-  <div class="card">
   <h2>🔧 मैकेनिक पार्टनर रजिस्ट्रेशन</h2>
   <form id="mechanicForm">
     <label>मैकेनिक का नाम</label>
@@ -136,12 +70,54 @@ this.reset();
   </form>
   <div id="mresult" style="display:none;padding:14px;margin-top:15px"></div>
 </div>
+</main>
+
+<footer>© 2026 RaahiFix | Saharsa, Bihar</footer>
 
 <script>
-document.getElementById("mechanicForm").addEventListener("submit", function(e) {
+const API = "https://raahifix-api.nooraman956086.workers.dev";
+
+document.getElementById("helpForm").addEventListener("submit", async function(e) {
   e.preventDefault();
 
-  const m = {
+  const result = document.getElementById("result");
+  result.style.display = "block";
+  result.textContent = "रिक्वेस्ट भेजी जा रही है...";
+
+  const request = {
+    customer_name: document.getElementById("name").value,
+    phone: document.getElementById("phone").value,
+    vehicle: document.getElementById("vehicle").value,
+    service: document.getElementById("service").value,
+    location: document.getElementById("location").value,
+    issue: document.getElementById("details").value
+  };
+
+  try {
+    const response = await fetch(API + "/api/requests", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(request)
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "रिक्वेस्ट नहीं भेजी गई");
+
+    result.textContent = "आपकी रिक्वेस्ट सफलतापूर्वक भेज दी गई। धन्यवाद!";
+    this.reset();
+  } catch (error) {
+    result.textContent = "रिक्वेस्ट भेजने में समस्या हुई। कृपया दोबारा कोशिश करें।";
+  }
+});
+
+document.getElementById("mechanicForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  const result = document.getElementById("mresult");
+  result.style.display = "block";
+  result.textContent = "रजिस्ट्रेशन भेजा जा रहा है...";
+
+  const mechanic = {
     name: document.getElementById("mname").value,
     phone: document.getElementById("mphone").value,
     shop: document.getElementById("shop").value,
@@ -150,14 +126,21 @@ document.getElementById("mechanicForm").addEventListener("submit", function(e) {
     location: document.getElementById("mlocation").value
   };
 
-  let list = JSON.parse(localStorage.getItem("raahifix_mechanics") || "[]");
-  list.push(m);
-  localStorage.setItem("raahifix_mechanics", JSON.stringify(list));
+  try {
+    const response = await fetch(API + "/api/mechanics", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(mechanic)
+    });
 
-  const result = document.getElementById("mresult");
-  result.style.display = "block";
-  result.textContent = "मैकेनिक की जानकारी इस डेमो में सेव हो गई है।";
-  this.reset();
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "रजिस्ट्रेशन नहीं हुआ");
+
+    result.textContent = "मैकेनिक रजिस्ट्रेशन सफलतापूर्वक हो गया!";
+    this.reset();
+  } catch (error) {
+    result.textContent = "रजिस्ट्रेशन में समस्या हुई। कृपया दोबारा कोशिश करें।";
+  }
 });
 </script>
 </body>
