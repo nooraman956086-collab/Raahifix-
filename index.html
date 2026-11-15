@@ -95,6 +95,133 @@ localStorage.setItem("raahifix_requests",JSON.stringify(requests));
 document.getElementById("result").style.display="block";
 document.getElementById("result").innerHTML="आपकी रिक्वेस्ट इस डेमो में सेव हो गई है। धन्यवाद!";
 this.reset();
+});const request={
+  </script>
+  <div class="card">
+  <h2>🔧 मैकेनिक पार्टनर रजिस्ट्रेशन</h2>
+  <form id="mechanicForm">
+    <label>मैकेनिक का नाम</label>
+    <input id="mname" required>
+
+    <label>मोबाइल नंबर</label>
+    <input id="mphone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
+
+    <label>दुकान/वर्कशॉप का नाम</label>
+    <input id="shop" required>
+
+    <label>कौन सी गाड़ी ठीक करते हैं?</label>
+    <select id="mvehicle" required>
+      <option value="">चुनें</option>
+      <option>बाइक</option>
+      <option>कार</option>
+      <option>ट्रक</option>
+      <option>सभी</option>
+    </select>
+
+    <label>कौन सी सेवा देते हैं?</label>
+    <select id="mservice" required>
+      <option value="">चुनें</option>
+      <option>टायर पंचर</option>
+      <option>मैकेनिक</option>
+      <option>बैटरी</option>
+      <option>टोइंग</option>
+      <option>इंजन</option>
+      <option>सभी सेवाएँ</option>
+    </select>
+
+    <label>काम करने की लोकेशन</label>
+    <input id="mlocation" required>
+
+    <button type="submit">रजिस्ट्रेशन भेजें</button>
+  </form>
+  <div id="mresult" style="display:none;padding:14px;margin-top:15px"></div>
+</div>
+
+<script>
+document.getElementById("mechanicForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  const m = {
+    name: document.getElementById("mname").value,
+    phone: document.getElementById("mphone").value,
+    shop: document.getElementById("shop").value,
+    vehicle: document.getElementById("mvehicle").value,
+    service: document.getElementById("mservice").value,
+    location: document.getElementById("mlocation").value
+  };
+
+  let list = JSON.parse(localStorage.getItem("raahifix_mechanics") || "[]");
+  list.push(m);
+  localStorage.setItem("raahifix_mechanics", JSON.stringify(list));
+
+  const result = document.getElementById("mresult");
+  result.style.display = "block";
+  result.textContent = "मैकेनिक की जानकारी इस डेमो में सेव हो गई है।";
+  this.reset();
+});
+</script>
+  
+<div class="card">
+  <h2>🔧 मैकेनिक पार्टनर रजिस्ट्रेशन</h2>
+  <form id="mechanicForm">
+    <label>मैकेनिक का नाम</label>
+    <input id="mname" required>
+
+    <label>मोबाइल नंबर</label>
+    <input id="mphone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
+
+    <label>दुकान/वर्कशॉप का नाम</label>
+    <input id="shop" required>
+
+    <label>कौन सी गाड़ी ठीक करते हैं?</label>
+    <select id="mvehicle" required>
+      <option value="">चुनें</option>
+      <option>बाइक</option>
+      <option>कार</option>
+      <option>ट्रक</option>
+      <option>सभी</option>
+    </select>
+
+    <label>कौन सी सेवा देते हैं?</label>
+    <select id="mservice" required>
+      <option value="">चुनें</option>
+      <option>टायर पंचर</option>
+      <option>मैकेनिक</option>
+      <option>बैटरी</option>
+      <option>टोइंग</option>
+      <option>इंजन</option>
+      <option>सभी सेवाएँ</option>
+    </select>
+
+    <label>काम करने की लोकेशन</label>
+    <input id="mlocation" required>
+
+    <button type="submit">रजिस्ट्रेशन भेजें</button>
+  </form>
+  <div id="mresult" style="display:none;padding:14px;margin-top:15px"></div>
+</div>
+
+<script>
+document.getElementById("mechanicForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  const m = {
+    name: document.getElementById("mname").value,
+    phone: document.getElementById("mphone").value,
+    shop: document.getElementById("shop").value,
+    vehicle: document.getElementById("mvehicle").value,
+    service: document.getElementById("mservice").value,
+    location: document.getElementById("mlocation").value
+  };
+
+  let list = JSON.parse(localStorage.getItem("raahifix_mechanics") || "[]");
+  list.push(m);
+  localStorage.setItem("raahifix_mechanics", JSON.stringify(list));
+
+  const result = document.getElementById("mresult");
+  result.style.display = "block";
+  result.textContent = "मैकेनिक की जानकारी इस डेमो में सेव हो गई है।";
+  this.reset();
 });
 </script>
 </body>
