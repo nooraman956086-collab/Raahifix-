@@ -1,0 +1,101 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RaahiFix - आपकी गाड़ी, हमारी मदद</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#172033}
+header{background:#102b46;color:white;padding:24px 18px;text-align:center}
+header h1{font-size:30px;margin:0;color:#ffbd35}
+header p{margin:8px 0 0}
+main{max-width:520px;margin:20px auto;padding:0 14px}
+.card{background:white;padding:20px;border-radius:15px;margin-bottom:16px;box-shadow:0 3px 12px #00000012}
+h2{margin-top:0;color:#102b46}
+label{display:block;margin:14px 0 6px;font-weight:bold}
+input,select,textarea{width:100%;padding:13px;border:1px solid #ccd5df;border-radius:9px;font-size:16px;background:white}
+button{width:100%;padding:15px;background:#ffad20;border:0;border-radius:10px;font-size:17px;font-weight:bold;margin-top:18px;color:#102b46}
+button:active{opacity:.8}
+#result{display:none;background:#e5f8e9;padding:14px;border-radius:10px;margin-top:15px;color:#17632a}
+footer{text-align:center;padding:22px;color:#657080}
+</style>
+</head>
+<body>
+<header>
+<h1>🚗 RaahiFix</h1>
+<p>आपकी गाड़ी, हमारी मदद</p>
+<p>रोड पर परेशानी? मदद अब आपके पास!</p>
+</header>
+
+<main>
+<div class="card">
+<h2>🛠️ मदद बुक करें</h2>
+<form id="helpForm">
+<label>आपका नाम</label>
+<input id="name" placeholder="अपना नाम लिखें" required>
+
+<label>मोबाइल नंबर</label>
+<input id="phone" type="tel" placeholder="10 अंकों का मोबाइल नंबर" pattern="[0-9]{10}" required>
+
+<label>गाड़ी का प्रकार</label>
+<select id="vehicle" required>
+<option value="">चुनें</option>
+<option>बाइक</option>
+<option>कार</option>
+<option>ट्रक</option>
+</select>
+
+<label>क्या समस्या है?</label>
+<select id="service" required>
+<option value="">सेवा चुनें</option>
+<option>टायर पंचर</option>
+<option>मैकेनिक</option>
+<option>बैटरी समस्या</option>
+<option>टोइंग सेवा</option>
+<option>इंजन समस्या</option>
+<option>अन्य</option>
+</select>
+
+<label>आपकी लोकेशन</label>
+<input id="location" placeholder="जैसे: सोनबरसा राज, सहरसा" required>
+
+<label>समस्या की जानकारी</label>
+<textarea id="details" placeholder="अपनी समस्या बताएं"></textarea>
+
+<button type="submit">मदद के लिए रिक्वेस्ट भेजें</button>
+</form>
+<div id="result"></div>
+</div>
+
+<div class="card">
+<h2>🔧 मैकेनिक पार्टनर</h2>
+<p>RaahiFix से जुड़कर अपने इलाके में काम पाएँ।</p>
+<p>जल्द ही मैकेनिक रजिस्ट्रेशन शुरू होगा।</p>
+</div>
+</main>
+
+<footer>© 2026 RaahiFix | Saharsa, Bihar</footer>
+
+<script>
+document.getElementById("helpForm").addEventListener("submit",function(e){
+e.preventDefault();
+const request={
+name:document.getElementById("name").value,
+phone:document.getElementById("phone").value,
+vehicle:document.getElementById("vehicle").value,
+service:document.getElementById("service").value,
+location:document.getElementById("location").value,
+details:document.getElementById("details").value
+};
+let requests=JSON.parse(localStorage.getItem("raahifix_requests")||"[]");
+requests.push(request);
+localStorage.setItem("raahifix_requests",JSON.stringify(requests));
+document.getElementById("result").style.display="block";
+document.getElementById("result").innerHTML="आपकी रिक्वेस्ट इस डेमो में सेव हो गई है। धन्यवाद!";
+this.reset();
+});
+</script>
+</body>
+</html>
