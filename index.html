@@ -1,4 +1,4 @@
-
+ 
 <!DOCTYPE html>
 <html lang="hi">
 <head>
@@ -17,12 +17,12 @@ h2{margin-top:0;color:#102b46}
 label{display:block;margin:14px 0 6px;font-weight:bold}
 input,select,textarea{width:100%;padding:13px;border:1px solid #ccd5df;border-radius:9px;font-size:16px;background:white}
 button{width:100%;padding:15px;background:#ffad20;border:0;border-radius:10px;font-size:17px;font-weight:bold;margin-top:18px;color:#102b46}
-button:active{opacity:.8}
-#result{display:none;background:#e5f8e9;padding:14px;border-radius:10px;margin-top:15px;color:#17632a}
+.message{display:none;padding:14px;margin-top:15px;border-radius:10px;background:#e5f8e9;color:#17632a}
 footer{text-align:center;padding:22px;color:#657080}
 </style>
 </head>
 <body>
+
 <header>
 <h1>🚗 RaahiFix</h1>
 <p>आपकी गाड़ी, हमारी मदद</p>
@@ -32,118 +32,163 @@ footer{text-align:center;padding:22px;color:#657080}
 <main>
 
 <div class="card">
-  <h2>🔧 मैकेनिक पार्टनर रजिस्ट्रेशन</h2>
-  <form id="mechanicForm">
-    <label>मैकेनिक का नाम</label>
-    <input id="mname" required>
+<h2>🛠️ मदद बुक करें</h2>
+<form id="helpForm">
 
-    <label>मोबाइल नंबर</label>
-    <input id="mphone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
+<label>आपका नाम</label>
+<input id="name" required>
 
-    <label>दुकान/वर्कशॉप का नाम</label>
-    <input id="shop" required>
+<label>मोबाइल नंबर</label>
+<input id="phone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
 
-    <label>कौन सी गाड़ी ठीक करते हैं?</label>
-    <select id="mvehicle" required>
-      <option value="">चुनें</option>
-      <option>बाइक</option>
-      <option>कार</option>
-      <option>ट्रक</option>
-      <option>सभी</option>
-    </select>
+<label>गाड़ी का प्रकार</label>
+<select id="vehicle" required>
+<option value="">चुनें</option>
+<option>बाइक</option>
+<option>कार</option>
+<option>ट्रक</option>
+</select>
 
-    <label>कौन सी सेवा देते हैं?</label>
-    <select id="mservice" required>
-      <option value="">चुनें</option>
-      <option>टायर पंचर</option>
-      <option>मैकेनिक</option>
-      <option>बैटरी</option>
-      <option>टोइंग</option>
-      <option>इंजन</option>
-      <option>सभी सेवाएँ</option>
-    </select>
+<label>क्या समस्या है?</label>
+<select id="service" required>
+<option value="">सेवा चुनें</option>
+<option>टायर पंचर</option>
+<option>मैकेनिक</option>
+<option>बैटरी समस्या</option>
+<option>टोइंग सेवा</option>
+<option>इंजन समस्या</option>
+<option>अन्य</option>
+</select>
 
-    <label>काम करने की लोकेशन</label>
-    <input id="mlocation" required>
+<label>आपकी लोकेशन</label>
+<input id="location" placeholder="जैसे: सोनबरसा राज, सहरसा" required>
 
-    <button type="submit">रजिस्ट्रेशन भेजें</button>
-  </form>
-  <div id="mresult" style="display:none;padding:14px;margin-top:15px"></div>
+<label>समस्या की जानकारी</label>
+<textarea id="details" placeholder="अपनी समस्या बताएं"></textarea>
+
+<button type="submit">मदद के लिए रिक्वेस्ट भेजें</button>
+</form>
+<div id="result" class="message"></div>
 </div>
+
+<div class="card">
+<h2>🔧 मैकेनिक पार्टनर रजिस्ट्रेशन</h2>
+<p>RaahiFix से जुड़कर अपने इलाके में काम पाएँ।</p>
+
+<form id="mechanicForm">
+
+<label>मैकेनिक का नाम</label>
+<input id="mname" required>
+
+<label>मोबाइल नंबर</label>
+<input id="mphone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
+
+<label>दुकान/वर्कशॉप का नाम</label>
+<input id="shop" required>
+
+<label>कौन सी गाड़ी ठीक करते हैं?</label>
+<select id="mvehicle" required>
+<option value="">चुनें</option>
+<option>बाइक</option>
+<option>कार</option>
+<option>ट्रक</option>
+<option>सभी</option>
+</select>
+
+<label>कौन सी सेवा देते हैं?</label>
+<select id="mservice" required>
+<option value="">चुनें</option>
+<option>टायर पंचर</option>
+<option>मैकेनिक</option>
+<option>बैटरी</option>
+<option>टोइंग</option>
+<option>इंजन</option>
+<option>सभी सेवाएँ</option>
+</select>
+
+<label>काम करने की लोकेशन</label>
+<input id="mlocation" placeholder="जैसे: सोनबरसा राज, सहरसा" required>
+
+<button type="submit">रजिस्ट्रेशन भेजें</button>
+</form>
+<div id="mresult" class="message"></div>
+</div>
+
 </main>
 
 <footer>© 2026 RaahiFix | Saharsa, Bihar</footer>
 
 <script>
 const API = "https://raahifix-api.nooraman956086.workers.dev";
-  if (document.getElementById("helpForm")) {}
 
 document.getElementById("helpForm").addEventListener("submit", async function(e) {
-  e.preventDefault();
+e.preventDefault();
 
-  const result = document.getElementById("result");
-  result.style.display = "block";
-  result.textContent = "रिक्वेस्ट भेजी जा रही है...";
+const result = document.getElementById("result");
+result.style.display = "block";
+result.textContent = "रिक्वेस्ट भेजी जा रही है...";
 
-  const request = {
-    customer_name: document.getElementById("name").value,
-    phone: document.getElementById("phone").value,
-    vehicle: document.getElementById("vehicle").value,
-    service: document.getElementById("service").value,
-    location: document.getElementById("location").value,
-    issue: document.getElementById("details").value
-  };
+const request = {
+customer_name: document.getElementById("name").value,
+phone: document.getElementById("phone").value,
+vehicle: document.getElementById("vehicle").value,
+service: document.getElementById("service").value,
+location: document.getElementById("location").value,
+issue: document.getElementById("details").value
+};
 
-  try {
-    const response = await fetch(API + "/api/requests", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(request)
-    });
+try {
+const response = await fetch(API + "/api/requests", {
+method: "POST",
+headers: {"Content-Type": "application/json"},
+body: JSON.stringify(request)
+});
 
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "रिक्वेस्ट नहीं भेजी गई");
+const data = await response.json();
+if (!response.ok) throw new Error(data.error || "रिक्वेस्ट नहीं भेजी गई");
 
-    result.textContent = "आपकी रिक्वेस्ट सफलतापूर्वक भेज दी गई। धन्यवाद!";
-    this.reset();
-  } catch (error) {
-    result.textContent = "रिक्वेस्ट भेजने में समस्या हुई। कृपया दोबारा कोशिश करें।";
-  }
+result.textContent = "आपकी रिक्वेस्ट सफलतापूर्वक भेज दी गई!";
+this.reset();
+
+} catch(error) {
+result.textContent = "समस्या: " + error.message;
+}
 });
 
 document.getElementById("mechanicForm").addEventListener("submit", async function(e) {
-  e.preventDefault();
+e.preventDefault();
 
-  const result = document.getElementById("mresult");
-  result.style.display = "block";
-  result.textContent = "रजिस्ट्रेशन भेजा जा रहा है...";
+const result = document.getElementById("mresult");
+result.style.display = "block";
+result.textContent = "रजिस्ट्रेशन भेजा जा रहा है...";
 
-  const mechanic = {
-    name: document.getElementById("mname").value,
-    phone: document.getElementById("mphone").value,
-    shop: document.getElementById("shop").value,
-    vehicle: document.getElementById("mvehicle").value,
-    service: document.getElementById("mservice").value,
-    location: document.getElementById("mlocation").value
-  };
+const mechanic = {
+name: document.getElementById("mname").value,
+phone: document.getElementById("mphone").value,
+shop: document.getElementById("shop").value,
+vehicle: document.getElementById("mvehicle").value,
+service: document.getElementById("mservice").value,
+location: document.getElementById("mlocation").value
+};
 
-  try {
-    const response = await fetch(API + "/api/mechanics", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(mechanic)
-    });
+try {
+const response = await fetch(API + "/api/mechanics", {
+method: "POST",
+headers: {"Content-Type": "application/json"},
+body: JSON.stringify(mechanic)
+});
 
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "रजिस्ट्रेशन नहीं हुआ");
+const data = await response.json();
+if (!response.ok) throw new Error(data.error || "रजिस्ट्रेशन नहीं हुआ");
 
-    result.textContent = "मैकेनिक रजिस्ट्रेशन सफलतापूर्वक हो गया!";
-    this.reset();
-  } catch (error) {
-    result.textContent = "रजिस्ट्रेशन में समस्या हुई। कृपया दोबारा कोशिश करें।";
-  }
+result.textContent = "मैकेनिक रजिस्ट्रेशन सफलतापूर्वक हो गया!";
+this.reset();
+
+} catch(error) {
+result.textContent = "समस्या: " + error.message;
+}
 });
 </script>
-  
+
 </body>
 </html>
