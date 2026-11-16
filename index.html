@@ -1,10 +1,11 @@
- 
+
 <!DOCTYPE html>
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RaahiFix - आपकी गाड़ी, हमारी मदद</title>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#172033}
@@ -21,6 +22,7 @@ button{width:100%;padding:15px;background:#ffad20;border:0;border-radius:10px;fo
 footer{text-align:center;padding:22px;color:#657080}
 </style>
 </head>
+
 <body>
 
 <header>
@@ -33,6 +35,7 @@ footer{text-align:center;padding:22px;color:#657080}
 
 <div class="card">
 <h2>🛠️ मदद बुक करें</h2>
+
 <form id="helpForm">
 
 <label>आपका नाम</label>
@@ -40,12 +43,14 @@ footer{text-align:center;padding:22px;color:#657080}
 
 <label>मोबाइल नंबर</label>
 <input id="phone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
+
 <button type="button" onclick="getLocation('customer')">
 📍 मेरी लोकेशन लें
 </button>
 
 <input type="hidden" id="customerLatitude">
 <input type="hidden" id="customerLongitude">
+
 <label>गाड़ी का प्रकार</label>
 <select id="vehicle" required>
 <option value="">चुनें</option>
@@ -72,9 +77,12 @@ footer{text-align:center;padding:22px;color:#657080}
 <textarea id="details" placeholder="अपनी समस्या बताएं"></textarea>
 
 <button type="submit">मदद के लिए रिक्वेस्ट भेजें</button>
+
 </form>
+
 <div id="result" class="message"></div>
 </div>
+
 
 <div class="card">
 <h2>🔧 मैकेनिक पार्टनर रजिस्ट्रेशन</h2>
@@ -87,6 +95,13 @@ footer{text-align:center;padding:22px;color:#657080}
 
 <label>मोबाइल नंबर</label>
 <input id="mphone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
+
+<button type="button" onclick="getLocation('mechanic')">
+📍 मेरी लोकेशन लें
+</button>
+
+<input type="hidden" id="mechanicLatitude">
+<input type="hidden" id="mechanicLongitude">
 
 <label>दुकान/वर्कशॉप का नाम</label>
 <input id="shop" required>
@@ -115,7 +130,9 @@ footer{text-align:center;padding:22px;color:#657080}
 <input id="mlocation" placeholder="जैसे: सोनबरसा राज, सहरसा" required>
 
 <button type="submit">रजिस्ट्रेशन भेजें</button>
+
 </form>
+
 <div id="mresult" class="message"></div>
 </div>
 
@@ -123,99 +140,191 @@ footer{text-align:center;padding:22px;color:#657080}
 
 <footer>© 2026 RaahiFix | Saharsa, Bihar</footer>
 
+
 <script>
+
 const API = "https://raahifix-api.nooraman956086.workers.dev";
 
-document.getElementById("helpForm").addEventListener("submit", async function(e) {
-e.preventDefault();
+// GPS LOCATION FUNCTION
 
-const result = document.getElementById("result");
-result.style.display = "block";
-result.textContent = "रिक्वेस्ट भेजी जा रही है...";
+function getLocation(type) {
 
-const request = {
-customer_name: document.getElementById("name").value,
-phone: document.getElementById("phone").value,
-vehicle: document.getElementById("vehicle").value,
-service: document.getElementById("service").value,
-location: document.getElementById("location").value,
-issue: document.getElementById("details").value
-};
+  if (!navigator.geolocation) {
+    alert("आपका मोबाइल GPS सपोर्ट नहीं करता।");
+    return;
+  }
 
-try {
-const response = await fetch(API + "/api/requests", {
-method: "POST",
-headers: {"Content-Type": "application/json"},
-body: JSON.stringify(request)
-});
+  if (!window.isSecureContext) {
+    alert("GPS के लिए सुरक्षित HTTPS वेबसाइट जरूरी है।");
+    return;
+  }
 
-const data = await response.json();
-if (!response.ok) throw new Error(data.error || "रिक्वेस्ट नहीं भेजी गई");
+  const latitude = document.getElementById(type + "Latitude");
+  const longitude = document.getElementById(type + "Longitude");
 
-result.textContent = "आपकी रिक्वेस्ट सफलतापूर्वक भेज दी गई!";
-this.reset();
+  if (!latitude || !longitude) {
+    alert("GPS फॉर्म में कोई गलती है।");
+    return;
+  }
 
-} catch(error) {
-result.textContent = "समस्या: " + error.message;
+  alert("आपकी लोकेशन खोजी जा रही है। कृपया इंतजार करें।");
+
+  navigator.geolocation.getCurrentPosition(
+
+    function(position) {
+
+      latitude.value = position.coords.latitude;
+      longitude.value = position.coords.longitude;
+
+      alert(
+        "आपकी लोकेशन सफलतापूर्वक मिल गई!\n" +
+        "Latitude: " + latitude.value + "\n" +
+        "Longitude: " + longitude.value
+      );
+
+    },
+
+    function(error) {
+
+      let message = "";
+
+      switch(error.code) {
+        case 1:
+          message = "लोकेशन की अनुमति नहीं मिली। Site Settings में Location Allow करें।";
+          break;
+
+        case 2:
+          message = "GPS लोकेशन उपलब्ध नहीं है। मोबाइल की Location चालू करें।";
+          break;
+
+        case 3:
+          message = "GPS खोजने में समय समाप्त हो गया। दोबारा कोशिश करें।";
+          break;
+
+        default:
+          message = error.message;
+      }
+
+      alert("GPS Error: " + message);
+
+    },
+
+    {
+      enableHighAccuracy: true,
+      timeout: 20000,
+      maximumAge: 0
+    }
+
+  );
 }
+
+
+// CUSTOMER REQUEST API
+
+document.getElementById("helpForm").addEventListener("submit", async function(e) {
+
+  e.preventDefault();
+
+  const result = document.getElementById("result");
+  result.style.display = "block";
+  result.textContent = "रिक्वेस्ट भेजी जा रही है...";
+
+  const request = {
+
+    customer_name: document.getElementById("name").value,
+    phone: document.getElementById("phone").value,
+    vehicle: document.getElementById("vehicle").value,
+    service: document.getElementById("service").value,
+    location: document.getElementById("location").value,
+    issue: document.getElementById("details").value,
+
+    latitude: document.getElementById("customerLatitude").value
+      ? Number(document.getElementById("customerLatitude").value) : null,
+
+    longitude: document.getElementById("customerLongitude").value
+      ? Number(document.getElementById("customerLongitude").value) : null
+
+  };
+
+  try {
+
+    const response = await fetch(API + "/api/requests", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(request)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "रिक्वेस्ट नहीं भेजी गई");
+    }
+
+    result.textContent = "आपकी रिक्वेस्ट सफलतापूर्वक भेज दी गई!";
+    this.reset();
+
+  } catch(error) {
+
+    result.textContent = "समस्या: " + error.message;
+
+  }
+
 });
+
+
+// MECHANIC REGISTRATION API
 
 document.getElementById("mechanicForm").addEventListener("submit", async function(e) {
-e.preventDefault();
 
-const result = document.getElementById("mresult");
-result.style.display = "block";
-result.textContent = "रजिस्ट्रेशन भेजा जा रहा है...";
+  e.preventDefault();
 
-const mechanic = {
-name: document.getElementById("mname").value,
-phone: document.getElementById("mphone").value,
-shop: document.getElementById("shop").value,
-vehicle: document.getElementById("mvehicle").value,
-service: document.getElementById("mservice").value,
-location: document.getElementById("mlocation").value
-};
+  const result = document.getElementById("mresult");
+  result.style.display = "block";
+  result.textContent = "रजिस्ट्रेशन भेजा जा रहा है...";
 
-try {
-const response = await fetch(API + "/api/mechanics", {
-method: "POST",
-headers: {"Content-Type": "application/json"},
-body: JSON.stringify(mechanic)
-});
+  const mechanic = {
 
-const data = await response.json();
-if (!response.ok) throw new Error(data.error || "रजिस्ट्रेशन नहीं हुआ");
+    name: document.getElementById("mname").value,
+    phone: document.getElementById("mphone").value,
+    shop: document.getElementById("shop").value,
+    vehicle: document.getElementById("mvehicle").value,
+    service: document.getElementById("mservice").value,
+    location: document.getElementById("mlocation").value,
 
-result.textContent = "मैकेनिक रजिस्ट्रेशन सफलतापूर्वक हो गया!";
-this.reset();
+    latitude: document.getElementById("mechanicLatitude").value
+      ? Number(document.getElementById("mechanicLatitude").value) : null,
 
-} catch(error) {
-result.textContent = "समस्या: " + error.message;
-}
-});
-</script>
-<script>
-function getLocation(type) {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      function(position) {
-        document.getElementById(type + 'Latitude').value =
-          position.coords.latitude;
+    longitude: document.getElementById("mechanicLongitude").value
+      ? Number(document.getElementById("mechanicLongitude").value) : null
 
-        document.getElementById(type + 'Longitude').value =
-          position.coords.longitude;
+  };
 
-        alert("आपकी लोकेशन सफलतापूर्वक मिल गई!");
-      },
-      <script>
-function getLocation(type) {
-}
-</script>
-    );
-  } else {
-    alert("आपका मोबाइल GPS सपोर्ट नहीं करता।");
+  try {
+
+    const response = await fetch(API + "/api/mechanics", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(mechanic)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "रजिस्ट्रेशन नहीं हुआ");
+    }
+
+    result.textContent = "मैकेनिक रजिस्ट्रेशन सफलतापूर्वक हो गया!";
+    this.reset();
+
+  } catch(error) {
+
+    result.textContent = "समस्या: " + error.message;
+
   }
-}
+
+});
+
 </script>
+
 </body>
 </html>
