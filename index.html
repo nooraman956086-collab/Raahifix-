@@ -40,7 +40,12 @@ footer{text-align:center;padding:22px;color:#657080}
 
 <label>मोबाइल नंबर</label>
 <input id="phone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
+<button type="button" onclick="getLocation('customer')">
+📍 मेरी लोकेशन लें
+</button>
 
+<input type="hidden" id="customerLatitude">
+<input type="hidden" id="customerLongitude">
 <label>गाड़ी का प्रकार</label>
 <select id="vehicle" required>
 <option value="">चुनें</option>
@@ -189,6 +194,27 @@ result.textContent = "समस्या: " + error.message;
 }
 });
 </script>
+<script>
+function getLocation(type) {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        document.getElementById(type + 'Latitude').value =
+          position.coords.latitude;
 
+        document.getElementById(type + 'Longitude').value =
+          position.coords.longitude;
+
+        alert("आपकी लोकेशन सफलतापूर्वक मिल गई!");
+      },
+      function(error) {
+        alert("लोकेशन नहीं मिली। GPS चालू करें और अनुमति दें।");
+      }
+    );
+  } else {
+    alert("आपका मोबाइल GPS सपोर्ट नहीं करता।");
+  }
+}
+</script>
 </body>
 </html>
