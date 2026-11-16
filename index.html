@@ -9,16 +9,23 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#172033}
-header{background:#102b46;color:white;padding:24px 18px;text-align:center}
-header h1{font-size:30px;margin:0;color:#ffbd35}
-header p{margin:8px 0 0}
-main{max-width:520px;margin:20px auto;padding:0 14px}
-.card{background:white;padding:20px;border-radius:15px;margin-bottom:16px;box-shadow:0 3px 12px #00000012}
-h2{margin-top:0;color:#102b46}
+header{background:#102b46;color:white;padding:25px 15px;text-align:center}
+header h1{margin:0;color:#ffbd35;font-size:32px}
+header p{margin:8px 0}
+main{max-width:550px;margin:20px auto;padding:0 14px}
+.card{background:white;padding:20px;border-radius:15px;margin-bottom:18px;box-shadow:0 3px 12px #0001}
+h2{color:#102b46;margin-top:0}
 label{display:block;margin:14px 0 6px;font-weight:bold}
-input,select,textarea{width:100%;padding:13px;border:1px solid #ccd5df;border-radius:9px;font-size:16px;background:white}
-button{width:100%;padding:15px;background:#ffad20;border:0;border-radius:10px;font-size:17px;font-weight:bold;margin-top:18px;color:#102b46}
-.message{display:none;padding:14px;margin-top:15px;border-radius:10px;background:#e5f8e9;color:#17632a}
+input,select,textarea{width:100%;padding:13px;border:1px solid #ccd5df;border-radius:9px;font-size:16px}
+button{width:100%;padding:15px;background:#ffad20;border:0;border-radius:10px;font-size:17px;font-weight:bold;margin-top:16px;color:#102b46}
+button:disabled{opacity:.6}
+.gps{background:#176cba;color:white}
+.message{display:none;padding:13px;margin-top:14px;border-radius:9px;background:#e5f8e9;color:#17632a;overflow-wrap:anywhere}
+.error{background:#ffe6e6;color:#a11}
+.map{width:100%;height:260px;border:0;border-radius:10px;margin-top:12px}
+.small{font-size:13px;color:#68778a}
+.mechanic{padding:12px;border:1px solid #ddd;border-radius:10px;margin-top:10px}
+a{color:#1265a8}
 footer{text-align:center;padding:22px;color:#657080}
 </style>
 </head>
@@ -44,12 +51,19 @@ footer{text-align:center;padding:22px;color:#657080}
 <label>मोबाइल नंबर</label>
 <input id="phone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
 
-<button type="button" onclick="getLocation('customer')">
-📍 मेरी लोकेशन लें
+<button type="button" class="gps" onclick="getLocation('customer')">
+📍 मेरी GPS लोकेशन लें
 </button>
+
+<p id="gpsStatus" class="small">अभी लोकेशन नहीं मिली है।</p>
 
 <input type="hidden" id="customerLatitude">
 <input type="hidden" id="customerLongitude">
+
+<div id="customerMapBox" style="display:none">
+<p><b>आपकी लोकेशन मैप पर</b></p>
+<iframe id="customerMap" class="map" loading="lazy"></iframe>
+</div>
 
 <label>गाड़ी का प्रकार</label>
 <select id="vehicle" required>
@@ -70,17 +84,18 @@ footer{text-align:center;padding:22px;color:#657080}
 <option>अन्य</option>
 </select>
 
-<label>आपकी लोकेशन</label>
+<label>आपकी लोकेशन का पता</label>
 <input id="location" placeholder="जैसे: सोनबरसा राज, सहरसा" required>
 
 <label>समस्या की जानकारी</label>
 <textarea id="details" placeholder="अपनी समस्या बताएं"></textarea>
 
-<button type="submit">मदद के लिए रिक्वेस्ट भेजें</button>
+<button type="submit" id="requestBtn">मदद के लिए रिक्वेस्ट भेजें</button>
 
 </form>
 
 <div id="result" class="message"></div>
+<div id="nearby"></div>
 </div>
 
 
@@ -96,12 +111,19 @@ footer{text-align:center;padding:22px;color:#657080}
 <label>मोबाइल नंबर</label>
 <input id="mphone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
 
-<button type="button" onclick="getLocation('mechanic')">
-📍 मेरी लोकेशन लें
+<button type="button" class="gps" onclick="getLocation('mechanic')">
+📍 मेरी GPS लोकेशन लें
 </button>
+
+<p id="mgpsStatus" class="small">अभी लोकेशन नहीं मिली है।</p>
 
 <input type="hidden" id="mechanicLatitude">
 <input type="hidden" id="mechanicLongitude">
+
+<div id="mechanicMapBox" style="display:none">
+<p><b>मैकेनिक की लोकेशन मैप पर</b></p>
+<iframe id="mechanicMap" class="map" loading="lazy"></iframe>
+</div>
 
 <label>दुकान/वर्कशॉप का नाम</label>
 <input id="shop" required>
@@ -129,7 +151,7 @@ footer{text-align:center;padding:22px;color:#657080}
 <label>काम करने की लोकेशन</label>
 <input id="mlocation" placeholder="जैसे: सोनबरसा राज, सहरसा" required>
 
-<button type="submit">रजिस्ट्रेशन भेजें</button>
+<button type="submit" id="mechanicBtn">रजिस्ट्रेशन भेजें</button>
 
 </form>
 
@@ -140,12 +162,18 @@ footer{text-align:center;padding:22px;color:#657080}
 
 <footer>© 2026 RaahiFix | Saharsa, Bihar</footer>
 
-
 <script>
 
 const API = "https://raahifix-api.nooraman956086.workers.dev";
 
-// GPS LOCATION FUNCTION
+function showMessage(id, message, error=false) {
+  const box = document.getElementById(id);
+  box.style.display = "block";
+  box.textContent = message;
+  box.className = error ? "message error" : "message";
+}
+
+// GPS FUNCTION
 
 function getLocation(type) {
 
@@ -155,170 +183,248 @@ function getLocation(type) {
   }
 
   if (!window.isSecureContext) {
-    alert("GPS के लिए सुरक्षित HTTPS वेबसाइट जरूरी है।");
+    alert("GPS के लिए HTTPS वेबसाइट जरूरी है।");
     return;
   }
 
-  const latitude = document.getElementById(type + "Latitude");
-  const longitude = document.getElementById(type + "Longitude");
+  const lat = document.getElementById(
+    type === "customer" ? "customerLatitude" : "mechanicLatitude"
+  );
 
-  if (!latitude || !longitude) {
-    alert("GPS फॉर्म में कोई गलती है।");
-    return;
-  }
+  const lng = document.getElementById(
+    type === "customer" ? "customerLongitude" : "mechanicLongitude"
+  );
 
-  alert("आपकी लोकेशन खोजी जा रही है। कृपया इंतजार करें।");
+  const status = document.getElementById(
+    type === "customer" ? "gpsStatus" : "mgpsStatus"
+  );
+
+  status.textContent = "GPS लोकेशन खोजी जा रही है...";
 
   navigator.geolocation.getCurrentPosition(
 
     function(position) {
 
-      latitude.value = position.coords.latitude;
-      longitude.value = position.coords.longitude;
+      lat.value = position.coords.latitude;
+      lng.value = position.coords.longitude;
 
-      alert(
-        "आपकी लोकेशन सफलतापूर्वक मिल गई!\n" +
-        "Latitude: " + latitude.value + "\n" +
-        "Longitude: " + longitude.value
+      const mapBox = document.getElementById(
+        type === "customer" ? "customerMapBox" : "mechanicMapBox"
       );
+
+      const map = document.getElementById(
+        type === "customer" ? "customerMap" : "mechanicMap"
+      );
+
+      map.src = "https://www.google.com/maps?q=" +
+        lat.value + "," + lng.value + "&z=16&output=embed";
+
+      mapBox.style.display = "block";
+
+      status.textContent = "✅ GPS लोकेशन मिल गई!";
 
     },
 
     function(error) {
 
-      let message = "";
+      let msg = "GPS लोकेशन नहीं मिल पाई।";
 
-      switch(error.code) {
-        case 1:
-          message = "लोकेशन की अनुमति नहीं मिली। Site Settings में Location Allow करें।";
-          break;
+      if(error.code === 1)
+        msg = "Location Permission Allow करें।";
 
-        case 2:
-          message = "GPS लोकेशन उपलब्ध नहीं है। मोबाइल की Location चालू करें।";
-          break;
+      if(error.code === 2)
+        msg = "मोबाइल की Location चालू करें।";
 
-        case 3:
-          message = "GPS खोजने में समय समाप्त हो गया। दोबारा कोशिश करें।";
-          break;
+      if(error.code === 3)
+        msg = "समय समाप्त हुआ। दोबारा कोशिश करें।";
 
-        default:
-          message = error.message;
-      }
-
-      alert("GPS Error: " + message);
+      status.textContent = "❌ " + msg;
+      alert(msg);
 
     },
 
     {
-      enableHighAccuracy: true,
-      timeout: 20000,
-      maximumAge: 0
+      enableHighAccuracy:true,
+      timeout:25000,
+      maximumAge:0
     }
 
   );
 }
 
 
-// CUSTOMER REQUEST API
+// CUSTOMER REQUEST
 
-document.getElementById("helpForm").addEventListener("submit", async function(e) {
+document.getElementById("helpForm").addEventListener(
+"submit", async function(e) {
 
   e.preventDefault();
 
-  const result = document.getElementById("result");
-  result.style.display = "block";
-  result.textContent = "रिक्वेस्ट भेजी जा रही है...";
+  const lat = document.getElementById("customerLatitude").value;
+  const lng = document.getElementById("customerLongitude").value;
+
+  if(!lat || !lng) {
+    alert("पहले GPS लोकेशन लें।");
+    return;
+  }
+
+  const btn = document.getElementById("requestBtn");
+  btn.disabled = true;
+
+  showMessage("result","रिक्वेस्ट भेजी जा रही है...");
 
   const request = {
-
-    customer_name: document.getElementById("name").value,
-    phone: document.getElementById("phone").value,
-    vehicle: document.getElementById("vehicle").value,
-    service: document.getElementById("service").value,
-    location: document.getElementById("location").value,
-    issue: document.getElementById("details").value,
-
-    latitude: document.getElementById("customerLatitude").value
-      ? Number(document.getElementById("customerLatitude").value) : null,
-
-    longitude: document.getElementById("customerLongitude").value
-      ? Number(document.getElementById("customerLongitude").value) : null
-
+    customer_name:document.getElementById("name").value,
+    phone:document.getElementById("phone").value,
+    vehicle:document.getElementById("vehicle").value,
+    service:document.getElementById("service").value,
+    location:document.getElementById("location").value,
+    issue:document.getElementById("details").value,
+    latitude:Number(lat),
+    longitude:Number(lng)
   };
 
   try {
 
     const response = await fetch(API + "/api/requests", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(request)
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(request)
     });
 
     const data = await response.json();
 
-    if (!response.ok) {
+    if(!response.ok || !data.success)
       throw new Error(data.error || "रिक्वेस्ट नहीं भेजी गई");
+
+    showMessage(
+      "result",
+      "✅ आपकी रिक्वेस्ट सफलतापूर्वक भेज दी गई! Request ID: " + data.requestId
+    );
+
+    const nearby = document.getElementById("nearby");
+    nearby.replaceChildren();
+
+    const heading = document.createElement("h3");
+    heading.textContent = "📍 आपके 5 KM के अंदर मैकेनिक";
+    nearby.appendChild(heading);
+
+    if(data.nearbyMechanics && data.nearbyMechanics.length) {
+
+      data.nearbyMechanics.forEach(m => {
+
+        const card = document.createElement("div");
+        card.className = "mechanic";
+
+        const title = document.createElement("b");
+        title.textContent = m.name;
+        card.appendChild(title);
+
+        const info = document.createElement("p");
+        info.textContent =
+          "दुकान: " + (m.shop || "उपलब्ध नहीं") +
+          " | दूरी: " + m.distance.toFixed(2) + " KM";
+        card.appendChild(info);
+
+        const link = document.createElement("a");
+        link.href = "https://www.google.com/maps/dir/?api=1&destination=" +
+          encodeURIComponent(m.latitude + "," + m.longitude);
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.textContent = "मैकेनिक तक रास्ता देखें";
+        card.appendChild(link);
+
+        nearby.appendChild(card);
+
+      });
+
+    } else {
+
+      const p = document.createElement("p");
+      p.textContent = "अभी आपके 5 KM के अंदर कोई रजिस्टर्ड मैकेनिक नहीं मिला।";
+      nearby.appendChild(p);
+
     }
 
-    result.textContent = "आपकी रिक्वेस्ट सफलतापूर्वक भेज दी गई!";
     this.reset();
+    document.getElementById("customerLatitude").value = "";
+    document.getElementById("customerLongitude").value = "";
+    document.getElementById("customerMapBox").style.display = "none";
+    document.getElementById("gpsStatus").textContent = "अभी लोकेशन नहीं मिली है।";
 
   } catch(error) {
 
-    result.textContent = "समस्या: " + error.message;
+    showMessage("result","❌ समस्या: " + error.message,true);
+
+  } finally {
+
+    btn.disabled = false;
 
   }
 
 });
 
 
-// MECHANIC REGISTRATION API
+// MECHANIC REGISTRATION
 
-document.getElementById("mechanicForm").addEventListener("submit", async function(e) {
+document.getElementById("mechanicForm").addEventListener(
+"submit", async function(e) {
 
   e.preventDefault();
 
-  const result = document.getElementById("mresult");
-  result.style.display = "block";
-  result.textContent = "रजिस्ट्रेशन भेजा जा रहा है...";
+  const lat = document.getElementById("mechanicLatitude").value;
+  const lng = document.getElementById("mechanicLongitude").value;
+
+  if(!lat || !lng) {
+    alert("पहले GPS लोकेशन लें।");
+    return;
+  }
+
+  const btn = document.getElementById("mechanicBtn");
+  btn.disabled = true;
+
+  showMessage("mresult","रजिस्ट्रेशन भेजा जा रहा है...");
 
   const mechanic = {
-
-    name: document.getElementById("mname").value,
-    phone: document.getElementById("mphone").value,
-    shop: document.getElementById("shop").value,
-    vehicle: document.getElementById("mvehicle").value,
-    service: document.getElementById("mservice").value,
-    location: document.getElementById("mlocation").value,
-
-    latitude: document.getElementById("mechanicLatitude").value
-      ? Number(document.getElementById("mechanicLatitude").value) : null,
-
-    longitude: document.getElementById("mechanicLongitude").value
-      ? Number(document.getElementById("mechanicLongitude").value) : null
-
+    name:document.getElementById("mname").value,
+    phone:document.getElementById("mphone").value,
+    shop:document.getElementById("shop").value,
+    vehicle:document.getElementById("mvehicle").value,
+    service:document.getElementById("mservice").value,
+    location:document.getElementById("mlocation").value,
+    latitude:Number(lat),
+    longitude:Number(lng)
   };
 
   try {
 
     const response = await fetch(API + "/api/mechanics", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(mechanic)
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(mechanic)
     });
 
     const data = await response.json();
 
-    if (!response.ok) {
+    if(!response.ok || !data.success)
       throw new Error(data.error || "रजिस्ट्रेशन नहीं हुआ");
-    }
 
-    result.textContent = "मैकेनिक रजिस्ट्रेशन सफलतापूर्वक हो गया!";
+    showMessage("mresult","✅ मैकेनिक रजिस्ट्रेशन सफल हो गया!");
+
     this.reset();
+
+    document.getElementById("mechanicLatitude").value = "";
+    document.getElementById("mechanicLongitude").value = "";
+    document.getElementById("mechanicMapBox").style.display = "none";
+    document.getElementById("mgpsStatus").textContent = "अभी लोकेशन नहीं मिली है।";
 
   } catch(error) {
 
-    result.textContent = "समस्या: " + error.message;
+    showMessage("mresult","❌ समस्या: " + error.message,true);
+
+  } finally {
+
+    btn.disabled = false;
 
   }
 
