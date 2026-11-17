@@ -6,6 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RaahiFix - आपकी गाड़ी, हमारी मदद</title>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#172033}
@@ -20,6 +23,7 @@ input,select,textarea{width:100%;padding:13px;border:1px solid #ccd5df;border-ra
 button{width:100%;padding:15px;background:#ffad20;border:0;border-radius:10px;font-size:17px;font-weight:bold;margin-top:16px;color:#102b46}
 button:disabled{opacity:.6}
 .gps{background:#176cba;color:white}
+.otp{background:#176cba;color:white}
 .message{display:none;padding:13px;margin-top:14px;border-radius:9px;background:#e5f8e9;color:#17632a;overflow-wrap:anywhere}
 .error{background:#ffe6e6;color:#a11}
 .map{width:100%;height:260px;border:0;border-radius:10px;margin-top:12px}
@@ -27,6 +31,8 @@ button:disabled{opacity:.6}
 .mechanic{padding:12px;border:1px solid #ddd;border-radius:10px;margin-top:10px}
 a{color:#1265a8}
 footer{text-align:center;padding:22px;color:#657080}
+.otpBox{display:none;margin-top:10px}
+.verified{color:green;font-weight:bold}
 </style>
 </head>
 
@@ -49,7 +55,21 @@ footer{text-align:center;padding:22px;color:#657080}
 <input id="name" required>
 
 <label>मोबाइल नंबर</label>
-<input id="phone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
+<input id="phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required>
+
+<div id="customerRecaptcha"></div>
+
+<button type="button" class="otp" id="customerSendOtp">
+📩 OTP भेजें
+</button>
+
+<div id="customerOtpBox" class="otpBox">
+<label>OTP डालें</label>
+<input id="customerOtp" type="text" inputmode="numeric" maxlength="6" placeholder="6 अंकों का OTP">
+<button type="button" class="otp" id="customerVerifyOtp">OTP सत्यापित करें</button>
+</div>
+
+<p id="customerOtpStatus" class="small"></p>
 
 <button type="button" class="gps" onclick="getLocation('customer')">
 📍 मेरी GPS लोकेशन लें
@@ -109,7 +129,21 @@ footer{text-align:center;padding:22px;color:#657080}
 <input id="mname" required>
 
 <label>मोबाइल नंबर</label>
-<input id="mphone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
+<input id="mphone" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required>
+
+<div id="mechanicRecaptcha"></div>
+
+<button type="button" class="otp" id="mechanicSendOtp">
+📩 OTP भेजें
+</button>
+
+<div id="mechanicOtpBox" class="otpBox">
+<label>OTP डालें</label>
+<input id="mechanicOtp" type="text" inputmode="numeric" maxlength="6" placeholder="6 अंकों का OTP">
+<button type="button" class="otp" id="mechanicVerifyOtp">OTP सत्यापित करें</button>
+</div>
+
+<p id="mechanicOtpStatus" class="small"></p>
 
 <button type="button" class="gps" onclick="getLocation('mechanic')">
 📍 मेरी GPS लोकेशन लें
@@ -166,6 +200,25 @@ footer{text-align:center;padding:22px;color:#657080}
 
 const API = "https://raahifix-api.nooraman956086.workers.dev";
 
+const firebaseConfig = {
+  apiKey: "AIzaSyAeo2s8jTCrtimNAS6eY7OYzaf1--XMJpo",
+  authDomain: "raahifix.firebaseapp.com",
+  projectId: "raahifix",
+  storageBucket: "raahifix.firebasestorage.app",
+  messagingSenderId: "238735225782",
+  appId: "1:238735225782:web:9e7812d4ff248ee0b14717"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+let customerConfirmation = null;
+let mechanicConfirmation = null;
+let customerVerifiedToken = null;
+let mechanicVerifiedToken = null;
+let customerVerifiedPhone = "";
+let mechanicVerifiedPhone = "";
+
 function showMessage(id, message, error=false) {
   const box = document.getElementById(id);
   box.style.display = "block";
@@ -173,10 +226,138 @@ function showMessage(id, message, error=false) {
   box.className = error ? "message error" : "message";
 }
 
+function getPhone(id) {
+  return document.getElementById(id).value.trim();
+}
+
+function resetVerification(type) {
+  if(type === "customer") {
+    customerVerifiedToken = null;
+    customerVerifiedPhone = "";
+    customerConfirmation = null;
+    document.getElementById("customerOtpBox").style.display = "none";
+    document.getElementById("customerOtpStatus").textContent = "";
+  } else {
+    mechanicVerifiedToken = null;
+    mechanicVerifiedPhone = "";
+    mechanicConfirmation = null;
+    document.getElementById("mechanicOtpBox").style.display = "none";
+    document.getElementById("mechanicOtpStatus").textContent = "";
+  }
+}
+
+document.getElementById("phone").addEventListener("input", () => resetVerification("customer"));
+document.getElementById("mphone").addEventListener("input", () => resetVerification("mechanic"));
+
+async function sendOtp(type) {
+  const isCustomer = type === "customer";
+  const phone = getPhone(isCustomer ? "phone" : "mphone");
+  const statusId = isCustomer ? "customerOtpStatus" : "mechanicOtpStatus";
+  const boxId = isCustomer ? "customerOtpBox" : "mechanicOtpBox";
+  const button = document.getElementById(isCustomer ? "customerSendOtp" : "mechanicSendOtp");
+
+  if(!/^[0-9]{10}$/.test(phone)) {
+    showMessage(statusId, "कृपया सही 10 अंकों का मोबाइल नंबर डालें।", true);
+    return;
+  }
+
+  button.disabled = true;
+  document.getElementById(statusId).textContent = "OTP भेजा जा रहा है...";
+
+  try {
+    let verifier;
+
+    if(isCustomer) {
+      if(!window.customerVerifier) {
+        window.customerVerifier = new firebase.auth.RecaptchaVerifier(
+          "customerRecaptcha",
+          {size:"invisible"}
+        );
+      }
+      verifier = window.customerVerifier;
+    } else {
+      if(!window.mechanicVerifier) {
+        window.mechanicVerifier = new firebase.auth.RecaptchaVerifier(
+          "mechanicRecaptcha",
+          {size:"invisible"}
+        );
+      }
+      verifier = window.mechanicVerifier;
+    }
+
+    await verifier.render();
+
+    const confirmation = await auth.signInWithPhoneNumber("+91" + phone, verifier);
+
+    if(isCustomer) {
+      customerConfirmation = confirmation;
+    } else {
+      mechanicConfirmation = confirmation;
+    }
+
+    document.getElementById(boxId).style.display = "block";
+    document.getElementById(statusId).textContent = "✅ OTP भेज दिया गया है। SMS चेक करें।";
+
+  } catch(error) {
+    document.getElementById(statusId).textContent =
+      "❌ OTP नहीं भेजा गया: " + error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function verifyOtp(type) {
+  const isCustomer = type === "customer";
+  const confirmation = isCustomer ? customerConfirmation : mechanicConfirmation;
+  const phone = getPhone(isCustomer ? "phone" : "mphone");
+  const otp = document.getElementById(isCustomer ? "customerOtp" : "mechanicOtp").value.trim();
+  const statusId = isCustomer ? "customerOtpStatus" : "mechanicOtpStatus";
+  const button = document.getElementById(isCustomer ? "customerVerifyOtp" : "mechanicVerifyOtp");
+
+  if(!confirmation) {
+    showMessage(statusId, "पहले OTP भेजें।", true);
+    return;
+  }
+
+  if(!/^[0-9]{6}$/.test(otp)) {
+    showMessage(statusId, "कृपया 6 अंकों का OTP डालें।", true);
+    return;
+  }
+
+  button.disabled = true;
+
+  try {
+    const result = await confirmation.confirm(otp);
+    const token = await result.user.getIdToken(true);
+
+    if(isCustomer) {
+      customerVerifiedToken = token;
+      customerVerifiedPhone = phone;
+    } else {
+      mechanicVerifiedToken = token;
+      mechanicVerifiedPhone = phone;
+    }
+
+    document.getElementById(statusId).textContent = "✅ मोबाइल नंबर सफलतापूर्वक सत्यापित हो गया!";
+    document.getElementById(statusId).className = "small verified";
+
+  } catch(error) {
+    document.getElementById(statusId).textContent =
+      "❌ OTP गलत है या समाप्त हो गया है: " + error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+document.getElementById("customerSendOtp").addEventListener("click", () => sendOtp("customer"));
+document.getElementById("mechanicSendOtp").addEventListener("click", () => sendOtp("mechanic"));
+document.getElementById("customerVerifyOtp").addEventListener("click", () => verifyOtp("customer"));
+document.getElementById("mechanicVerifyOtp").addEventListener("click", () => verifyOtp("mechanic"));
+
+
 // GPS FUNCTION
 
 function getLocation(type) {
-
   if (!navigator.geolocation) {
     alert("आपका मोबाइल GPS सपोर्ट नहीं करता।");
     return;
@@ -187,78 +368,48 @@ function getLocation(type) {
     return;
   }
 
-  const lat = document.getElementById(
-    type === "customer" ? "customerLatitude" : "mechanicLatitude"
-  );
-
-  const lng = document.getElementById(
-    type === "customer" ? "customerLongitude" : "mechanicLongitude"
-  );
-
-  const status = document.getElementById(
-    type === "customer" ? "gpsStatus" : "mgpsStatus"
-  );
+  const lat = document.getElementById(type === "customer" ? "customerLatitude" : "mechanicLatitude");
+  const lng = document.getElementById(type === "customer" ? "customerLongitude" : "mechanicLongitude");
+  const status = document.getElementById(type === "customer" ? "gpsStatus" : "mgpsStatus");
 
   status.textContent = "GPS लोकेशन खोजी जा रही है...";
 
   navigator.geolocation.getCurrentPosition(
-
     function(position) {
-
       lat.value = position.coords.latitude;
       lng.value = position.coords.longitude;
 
-      const mapBox = document.getElementById(
-        type === "customer" ? "customerMapBox" : "mechanicMapBox"
-      );
+      const mapBox = document.getElementById(type === "customer" ? "customerMapBox" : "mechanicMapBox");
+      const map = document.getElementById(type === "customer" ? "customerMap" : "mechanicMap");
 
-      const map = document.getElementById(
-        type === "customer" ? "customerMap" : "mechanicMap"
-      );
-
-      map.src = "https://www.google.com/maps?q=" +
-        lat.value + "," + lng.value + "&z=16&output=embed";
-
+      map.src = "https://www.google.com/maps?q=" + lat.value + "," + lng.value + "&z=16&output=embed";
       mapBox.style.display = "block";
-
       status.textContent = "✅ GPS लोकेशन मिल गई!";
-
     },
-
     function(error) {
-
       let msg = "GPS लोकेशन नहीं मिल पाई।";
-
-      if(error.code === 1)
-        msg = "Location Permission Allow करें।";
-
-      if(error.code === 2)
-        msg = "मोबाइल की Location चालू करें।";
-
-      if(error.code === 3)
-        msg = "समय समाप्त हुआ। दोबारा कोशिश करें।";
-
+      if(error.code === 1) msg = "Location Permission Allow करें।";
+      if(error.code === 2) msg = "मोबाइल की Location चालू करें।";
+      if(error.code === 3) msg = "समय समाप्त हुआ। दोबारा कोशिश करें।";
       status.textContent = "❌ " + msg;
       alert(msg);
-
     },
-
-    {
-      enableHighAccuracy:true,
-      timeout:25000,
-      maximumAge:0
-    }
-
+    {enableHighAccuracy:true, timeout:25000, maximumAge:0}
   );
 }
 
 
 // CUSTOMER REQUEST
 
-document.getElementById("helpForm").addEventListener(
-"submit", async function(e) {
-
+document.getElementById("helpForm").addEventListener("submit", async function(e) {
   e.preventDefault();
+
+  const phone = getPhone("phone");
+
+  if(!customerVerifiedToken || customerVerifiedPhone !== phone) {
+    alert("पहले मोबाइल OTP सत्यापित करें।");
+    return;
+  }
 
   const lat = document.getElementById("customerLatitude").value;
   const lng = document.getElementById("customerLongitude").value;
@@ -270,12 +421,12 @@ document.getElementById("helpForm").addEventListener(
 
   const btn = document.getElementById("requestBtn");
   btn.disabled = true;
-
   showMessage("result","रिक्वेस्ट भेजी जा रही है...");
 
   const request = {
+    name:document.getElementById("name").value,
     customer_name:document.getElementById("name").value,
-    phone:document.getElementById("phone").value,
+    phone:phone,
     vehicle:document.getElementById("vehicle").value,
     service:document.getElementById("service").value,
     location:document.getElementById("location").value,
@@ -285,10 +436,12 @@ document.getElementById("helpForm").addEventListener(
   };
 
   try {
-
     const response = await fetch(API + "/api/requests", {
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + customerVerifiedToken
+      },
       body:JSON.stringify(request)
     });
 
@@ -297,10 +450,7 @@ document.getElementById("helpForm").addEventListener(
     if(!response.ok || !data.success)
       throw new Error(data.error || "रिक्वेस्ट नहीं भेजी गई");
 
-    showMessage(
-      "result",
-      "✅ आपकी रिक्वेस्ट सफलतापूर्वक भेज दी गई! Request ID: " + data.requestId
-    );
+    showMessage("result","✅ आपकी रिक्वेस्ट सफलतापूर्वक भेज दी गई! Request ID: " + data.requestId);
 
     const nearby = document.getElementById("nearby");
     nearby.replaceChildren();
@@ -310,9 +460,7 @@ document.getElementById("helpForm").addEventListener(
     nearby.appendChild(heading);
 
     if(data.nearbyMechanics && data.nearbyMechanics.length) {
-
       data.nearbyMechanics.forEach(m => {
-
         const card = document.createElement("div");
         card.className = "mechanic";
 
@@ -321,56 +469,50 @@ document.getElementById("helpForm").addEventListener(
         card.appendChild(title);
 
         const info = document.createElement("p");
-        info.textContent =
-          "दुकान: " + (m.shop || "उपलब्ध नहीं") +
-          " | दूरी: " + m.distance.toFixed(2) + " KM";
+        info.textContent = "दुकान: " + (m.shop || "उपलब्ध नहीं") + " | दूरी: " + Number(m.distance).toFixed(2) + " KM";
         card.appendChild(info);
 
         const link = document.createElement("a");
-        link.href = "https://www.google.com/maps/dir/?api=1&destination=" +
-          encodeURIComponent(m.latitude + "," + m.longitude);
+        link.href = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(m.latitude + "," + m.longitude);
         link.target = "_blank";
         link.rel = "noopener";
         link.textContent = "मैकेनिक तक रास्ता देखें";
         card.appendChild(link);
 
         nearby.appendChild(card);
-
       });
-
     } else {
-
       const p = document.createElement("p");
       p.textContent = "अभी आपके 5 KM के अंदर कोई रजिस्टर्ड मैकेनिक नहीं मिला।";
       nearby.appendChild(p);
-
     }
 
     this.reset();
+    resetVerification("customer");
     document.getElementById("customerLatitude").value = "";
     document.getElementById("customerLongitude").value = "";
     document.getElementById("customerMapBox").style.display = "none";
     document.getElementById("gpsStatus").textContent = "अभी लोकेशन नहीं मिली है।";
 
   } catch(error) {
-
     showMessage("result","❌ समस्या: " + error.message,true);
-
   } finally {
-
     btn.disabled = false;
-
   }
-
 });
 
 
 // MECHANIC REGISTRATION
 
-document.getElementById("mechanicForm").addEventListener(
-"submit", async function(e) {
-
+document.getElementById("mechanicForm").addEventListener("submit", async function(e) {
   e.preventDefault();
+
+  const phone = getPhone("mphone");
+
+  if(!mechanicVerifiedToken || mechanicVerifiedPhone !== phone) {
+    alert("पहले मैकेनिक का मोबाइल OTP सत्यापित करें।");
+    return;
+  }
 
   const lat = document.getElementById("mechanicLatitude").value;
   const lng = document.getElementById("mechanicLongitude").value;
@@ -382,12 +524,11 @@ document.getElementById("mechanicForm").addEventListener(
 
   const btn = document.getElementById("mechanicBtn");
   btn.disabled = true;
-
   showMessage("mresult","रजिस्ट्रेशन भेजा जा रहा है...");
 
   const mechanic = {
     name:document.getElementById("mname").value,
-    phone:document.getElementById("mphone").value,
+    phone:phone,
     shop:document.getElementById("shop").value,
     vehicle:document.getElementById("mvehicle").value,
     service:document.getElementById("mservice").value,
@@ -397,10 +538,12 @@ document.getElementById("mechanicForm").addEventListener(
   };
 
   try {
-
     const response = await fetch(API + "/api/mechanics", {
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + mechanicVerifiedToken
+      },
       body:JSON.stringify(mechanic)
     });
 
@@ -412,22 +555,17 @@ document.getElementById("mechanicForm").addEventListener(
     showMessage("mresult","✅ मैकेनिक रजिस्ट्रेशन सफल हो गया!");
 
     this.reset();
-
+    resetVerification("mechanic");
     document.getElementById("mechanicLatitude").value = "";
     document.getElementById("mechanicLongitude").value = "";
     document.getElementById("mechanicMapBox").style.display = "none";
     document.getElementById("mgpsStatus").textContent = "अभी लोकेशन नहीं मिली है।";
 
   } catch(error) {
-
     showMessage("mresult","❌ समस्या: " + error.message,true);
-
   } finally {
-
     btn.disabled = false;
-
   }
-
 });
 
 </script>
